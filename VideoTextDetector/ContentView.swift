@@ -3,6 +3,7 @@ import AVFoundation
 import AVKit
 import CoreMedia
 import UniformTypeIdentifiers
+import Vision
 
 struct ContentView: View {
     @StateObject private var videoProcessor = VideoProcessor()
@@ -10,6 +11,10 @@ struct ContentView: View {
     @State private var searchKeyword = ""
     @State private var searchResults: [DetectedFrame] = []
     @State private var player: AVPlayer?
+    
+    // 新增的状态变量
+    @State private var recognitionLevel: VNRequestTextRecognitionLevel = .fast
+    @State private var recognitionLanguage: String = "en-US"
     
     func formatTime(seconds: Double) -> String {
         let date = Date(timeIntervalSince1970: seconds)
@@ -35,13 +40,30 @@ struct ContentView: View {
                     if panel.runModal() == .OK {
                         selectedVideo = panel.url
                         player = AVPlayer(url: selectedVideo!)
-                        // player?.play() // 选择视频后立即播放
-                        videoProcessor.processVideo(url: selectedVideo!)
+                        videoProcessor.processVideo(url: selectedVideo!, recognitionLevel: recognitionLevel, recognitionLanguage: recognitionLanguage)
                     }
                 }
                 .padding()
                 .disabled(videoProcessor.isProcessing) // 禁用按钮
                 
+                // 识别级别选择
+                Picker("识别级别", selection: $recognitionLevel) {
+                    Text("快速").tag(VNRequestTextRecognitionLevel.fast)
+                    Text("准确").tag(VNRequestTextRecognitionLevel.accurate)
+                }
+                .pickerStyle(SegmentedPickerStyle())
+                .padding()
+                
+                // 识别语言选择
+                Picker("识别语言", selection: $recognitionLanguage) {
+                    Text("英语").tag("en-US")
+                    Text("中文").tag("zh-CN")
+                    // 可以添加更多语言选项
+                }
+                .pickerStyle(MenuPickerStyle())
+                .padding()
+
+                // 进度条
                 if videoProcessor.isProcessing {
                     ProgressView("正在处理视频...")
                         .padding()
@@ -59,14 +81,13 @@ struct ContentView: View {
             
             // 右侧搜索和结果
             VStack {
+                // 搜索框和搜索按钮
                 HStack {
-                    // 搜索框
                     TextField("搜索关键词", text: $searchKeyword)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .padding()
                         .disabled(videoProcessor.isProcessing) // 禁用搜索框
                     
-                    // 搜索按钮
                     Button("搜索") {
                         searchResults = videoProcessor.searchKeyword(searchKeyword)
                     }
@@ -89,11 +110,7 @@ struct ContentView: View {
                     .onTapGesture {
                         if let player = player {
                             let targetTime = CMTime(seconds: frame.timestamp, preferredTimescale: 600)
-                            player.seek(to: targetTime) { finished in
-                                // if finished {
-                                //     player.play()//自动播放
-                                // }
-                            }
+                            player.seek(to: targetTime) // 跳转到指定时间
                         }
                     }
                 }
