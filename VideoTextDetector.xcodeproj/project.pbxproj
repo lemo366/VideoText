@@ -1,0 +1,611 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AF5E68682C9BD7E8008DBC6A /* VideoTextDetectorApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF5E68672C9BD7E8008DBC6A /* VideoTextDetectorApp.swift */; };
+		AF5E686A2C9BD7E8008DBC6A /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF5E68692C9BD7E8008DBC6A /* ContentView.swift */; };
+		AF5E686C2C9BD7E9008DBC6A /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AF5E686B2C9BD7E9008DBC6A /* Assets.xcassets */; };
+		AF5E686F2C9BD7E9008DBC6A /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = AF5E686E2C9BD7E9008DBC6A /* Preview Assets.xcassets */; };
+		AF5E687A2C9BD7E9008DBC6A /* VideoTextDetectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF5E68792C9BD7E9008DBC6A /* VideoTextDetectorTests.swift */; };
+		AF5E68842C9BD7E9008DBC6A /* VideoTextDetectorUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF5E68832C9BD7E9008DBC6A /* VideoTextDetectorUITests.swift */; };
+		AF5E68862C9BD7E9008DBC6A /* VideoTextDetectorUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF5E68852C9BD7E9008DBC6A /* VideoTextDetectorUITestsLaunchTests.swift */; };
+		AF5E68942C9BD90B008DBC6A /* Vision.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF5E68932C9BD90B008DBC6A /* Vision.framework */; };
+		AF5E68962C9BD915008DBC6A /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF5E68952C9BD915008DBC6A /* AVFoundation.framework */; };
+		AFD935F72C9BDC3E00F07B3C /* VideoProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFD935F62C9BDC3E00F07B3C /* VideoProcessor.swift */; };
+		AFD935F92C9BDC7500F07B3C /* VideoPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFD935F82C9BDC7500F07B3C /* VideoPlayer.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		AF5E68762C9BD7E9008DBC6A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AF5E685C2C9BD7E8008DBC6A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF5E68632C9BD7E8008DBC6A;
+			remoteInfo = VideoTextDetector;
+		};
+		AF5E68802C9BD7E9008DBC6A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AF5E685C2C9BD7E8008DBC6A /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF5E68632C9BD7E8008DBC6A;
+			remoteInfo = VideoTextDetector;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		AF5E68642C9BD7E8008DBC6A /* VideoTextDetector.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VideoTextDetector.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF5E68672C9BD7E8008DBC6A /* VideoTextDetectorApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoTextDetectorApp.swift; sourceTree = "<group>"; };
+		AF5E68692C9BD7E8008DBC6A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		AF5E686B2C9BD7E9008DBC6A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		AF5E686E2C9BD7E9008DBC6A /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		AF5E68702C9BD7E9008DBC6A /* VideoTextDetector.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VideoTextDetector.entitlements; sourceTree = "<group>"; };
+		AF5E68752C9BD7E9008DBC6A /* VideoTextDetectorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VideoTextDetectorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF5E68792C9BD7E9008DBC6A /* VideoTextDetectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoTextDetectorTests.swift; sourceTree = "<group>"; };
+		AF5E687F2C9BD7E9008DBC6A /* VideoTextDetectorUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = VideoTextDetectorUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF5E68832C9BD7E9008DBC6A /* VideoTextDetectorUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoTextDetectorUITests.swift; sourceTree = "<group>"; };
+		AF5E68852C9BD7E9008DBC6A /* VideoTextDetectorUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoTextDetectorUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		AF5E68932C9BD90B008DBC6A /* Vision.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Vision.framework; path = System/Library/Frameworks/Vision.framework; sourceTree = SDKROOT; };
+		AF5E68952C9BD915008DBC6A /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		AFD935F62C9BDC3E00F07B3C /* VideoProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoProcessor.swift; sourceTree = "<group>"; };
+		AFD935F82C9BDC7500F07B3C /* VideoPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayer.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AF5E68612C9BD7E8008DBC6A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF5E68962C9BD915008DBC6A /* AVFoundation.framework in Frameworks */,
+				AF5E68942C9BD90B008DBC6A /* Vision.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF5E68722C9BD7E9008DBC6A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF5E687C2C9BD7E9008DBC6A /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		AF5E685B2C9BD7E8008DBC6A = {
+			isa = PBXGroup;
+			children = (
+				AF5E68662C9BD7E8008DBC6A /* VideoTextDetector */,
+				AF5E68782C9BD7E9008DBC6A /* VideoTextDetectorTests */,
+				AF5E68822C9BD7E9008DBC6A /* VideoTextDetectorUITests */,
+				AF5E68652C9BD7E8008DBC6A /* Products */,
+				AF5E68922C9BD90B008DBC6A /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		AF5E68652C9BD7E8008DBC6A /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AF5E68642C9BD7E8008DBC6A /* VideoTextDetector.app */,
+				AF5E68752C9BD7E9008DBC6A /* VideoTextDetectorTests.xctest */,
+				AF5E687F2C9BD7E9008DBC6A /* VideoTextDetectorUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		AF5E68662C9BD7E8008DBC6A /* VideoTextDetector */ = {
+			isa = PBXGroup;
+			children = (
+				AF5E68672C9BD7E8008DBC6A /* VideoTextDetectorApp.swift */,
+				AF5E68692C9BD7E8008DBC6A /* ContentView.swift */,
+				AF5E686B2C9BD7E9008DBC6A /* Assets.xcassets */,
+				AF5E68702C9BD7E9008DBC6A /* VideoTextDetector.entitlements */,
+				AF5E686D2C9BD7E9008DBC6A /* Preview Content */,
+				AFD935F62C9BDC3E00F07B3C /* VideoProcessor.swift */,
+				AFD935F82C9BDC7500F07B3C /* VideoPlayer.swift */,
+			);
+			path = VideoTextDetector;
+			sourceTree = "<group>";
+		};
+		AF5E686D2C9BD7E9008DBC6A /* Preview Content */ = {
+			isa = PBXGroup;
+			children = (
+				AF5E686E2C9BD7E9008DBC6A /* Preview Assets.xcassets */,
+			);
+			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		AF5E68782C9BD7E9008DBC6A /* VideoTextDetectorTests */ = {
+			isa = PBXGroup;
+			children = (
+				AF5E68792C9BD7E9008DBC6A /* VideoTextDetectorTests.swift */,
+			);
+			path = VideoTextDetectorTests;
+			sourceTree = "<group>";
+		};
+		AF5E68822C9BD7E9008DBC6A /* VideoTextDetectorUITests */ = {
+			isa = PBXGroup;
+			children = (
+				AF5E68832C9BD7E9008DBC6A /* VideoTextDetectorUITests.swift */,
+				AF5E68852C9BD7E9008DBC6A /* VideoTextDetectorUITestsLaunchTests.swift */,
+			);
+			path = VideoTextDetectorUITests;
+			sourceTree = "<group>";
+		};
+		AF5E68922C9BD90B008DBC6A /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				AF5E68952C9BD915008DBC6A /* AVFoundation.framework */,
+				AF5E68932C9BD90B008DBC6A /* Vision.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AF5E68632C9BD7E8008DBC6A /* VideoTextDetector */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF5E68892C9BD7E9008DBC6A /* Build configuration list for PBXNativeTarget "VideoTextDetector" */;
+			buildPhases = (
+				AF5E68602C9BD7E8008DBC6A /* Sources */,
+				AF5E68612C9BD7E8008DBC6A /* Frameworks */,
+				AF5E68622C9BD7E8008DBC6A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = VideoTextDetector;
+			productName = VideoTextDetector;
+			productReference = AF5E68642C9BD7E8008DBC6A /* VideoTextDetector.app */;
+			productType = "com.apple.product-type.application";
+		};
+		AF5E68742C9BD7E9008DBC6A /* VideoTextDetectorTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF5E688C2C9BD7E9008DBC6A /* Build configuration list for PBXNativeTarget "VideoTextDetectorTests" */;
+			buildPhases = (
+				AF5E68712C9BD7E9008DBC6A /* Sources */,
+				AF5E68722C9BD7E9008DBC6A /* Frameworks */,
+				AF5E68732C9BD7E9008DBC6A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF5E68772C9BD7E9008DBC6A /* PBXTargetDependency */,
+			);
+			name = VideoTextDetectorTests;
+			productName = VideoTextDetectorTests;
+			productReference = AF5E68752C9BD7E9008DBC6A /* VideoTextDetectorTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		AF5E687E2C9BD7E9008DBC6A /* VideoTextDetectorUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF5E688F2C9BD7E9008DBC6A /* Build configuration list for PBXNativeTarget "VideoTextDetectorUITests" */;
+			buildPhases = (
+				AF5E687B2C9BD7E9008DBC6A /* Sources */,
+				AF5E687C2C9BD7E9008DBC6A /* Frameworks */,
+				AF5E687D2C9BD7E9008DBC6A /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF5E68812C9BD7E9008DBC6A /* PBXTargetDependency */,
+			);
+			name = VideoTextDetectorUITests;
+			productName = VideoTextDetectorUITests;
+			productReference = AF5E687F2C9BD7E9008DBC6A /* VideoTextDetectorUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AF5E685C2C9BD7E8008DBC6A /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1540;
+				LastUpgradeCheck = 1540;
+				TargetAttributes = {
+					AF5E68632C9BD7E8008DBC6A = {
+						CreatedOnToolsVersion = 15.4;
+					};
+					AF5E68742C9BD7E9008DBC6A = {
+						CreatedOnToolsVersion = 15.4;
+						TestTargetID = AF5E68632C9BD7E8008DBC6A;
+					};
+					AF5E687E2C9BD7E9008DBC6A = {
+						CreatedOnToolsVersion = 15.4;
+						TestTargetID = AF5E68632C9BD7E8008DBC6A;
+					};
+				};
+			};
+			buildConfigurationList = AF5E685F2C9BD7E8008DBC6A /* Build configuration list for PBXProject "VideoTextDetector" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+				"zh-Hans",
+			);
+			mainGroup = AF5E685B2C9BD7E8008DBC6A;
+			productRefGroup = AF5E68652C9BD7E8008DBC6A /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AF5E68632C9BD7E8008DBC6A /* VideoTextDetector */,
+				AF5E68742C9BD7E9008DBC6A /* VideoTextDetectorTests */,
+				AF5E687E2C9BD7E9008DBC6A /* VideoTextDetectorUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AF5E68622C9BD7E8008DBC6A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF5E686F2C9BD7E9008DBC6A /* Preview Assets.xcassets in Resources */,
+				AF5E686C2C9BD7E9008DBC6A /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF5E68732C9BD7E9008DBC6A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF5E687D2C9BD7E9008DBC6A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AF5E68602C9BD7E8008DBC6A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFD935F92C9BDC7500F07B3C /* VideoPlayer.swift in Sources */,
+				AFD935F72C9BDC3E00F07B3C /* VideoProcessor.swift in Sources */,
+				AF5E686A2C9BD7E8008DBC6A /* ContentView.swift in Sources */,
+				AF5E68682C9BD7E8008DBC6A /* VideoTextDetectorApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF5E68712C9BD7E9008DBC6A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF5E687A2C9BD7E9008DBC6A /* VideoTextDetectorTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF5E687B2C9BD7E9008DBC6A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF5E68842C9BD7E9008DBC6A /* VideoTextDetectorUITests.swift in Sources */,
+				AF5E68862C9BD7E9008DBC6A /* VideoTextDetectorUITestsLaunchTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AF5E68772C9BD7E9008DBC6A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF5E68632C9BD7E8008DBC6A /* VideoTextDetector */;
+			targetProxy = AF5E68762C9BD7E9008DBC6A /* PBXContainerItemProxy */;
+		};
+		AF5E68812C9BD7E9008DBC6A /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF5E68632C9BD7E8008DBC6A /* VideoTextDetector */;
+			targetProxy = AF5E68802C9BD7E9008DBC6A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		AF5E68872C9BD7E9008DBC6A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.3;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		AF5E68882C9BD7E9008DBC6A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.3;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		AF5E688A2C9BD7E9008DBC6A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = VideoTextDetector/VideoTextDetector.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"VideoTextDetector/Preview Content\"";
+				DEVELOPMENT_TEAM = J2KLM3UFGQ;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.VideoTextDetector;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		AF5E688B2C9BD7E9008DBC6A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = VideoTextDetector/VideoTextDetector.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "\"VideoTextDetector/Preview Content\"";
+				DEVELOPMENT_TEAM = J2KLM3UFGQ;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.VideoTextDetector;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		AF5E688D2C9BD7E9008DBC6A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J2KLM3UFGQ;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.3;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.VideoTextDetectorTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VideoTextDetector.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/VideoTextDetector";
+			};
+			name = Debug;
+		};
+		AF5E688E2C9BD7E9008DBC6A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J2KLM3UFGQ;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.3;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.VideoTextDetectorTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/VideoTextDetector.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/VideoTextDetector";
+			};
+			name = Release;
+		};
+		AF5E68902C9BD7E9008DBC6A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J2KLM3UFGQ;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.VideoTextDetectorUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = VideoTextDetector;
+			};
+			name = Debug;
+		};
+		AF5E68912C9BD7E9008DBC6A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J2KLM3UFGQ;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.VideoTextDetectorUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = VideoTextDetector;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AF5E685F2C9BD7E8008DBC6A /* Build configuration list for PBXProject "VideoTextDetector" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF5E68872C9BD7E9008DBC6A /* Debug */,
+				AF5E68882C9BD7E9008DBC6A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AF5E68892C9BD7E9008DBC6A /* Build configuration list for PBXNativeTarget "VideoTextDetector" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF5E688A2C9BD7E9008DBC6A /* Debug */,
+				AF5E688B2C9BD7E9008DBC6A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AF5E688C2C9BD7E9008DBC6A /* Build configuration list for PBXNativeTarget "VideoTextDetectorTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF5E688D2C9BD7E9008DBC6A /* Debug */,
+				AF5E688E2C9BD7E9008DBC6A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AF5E688F2C9BD7E9008DBC6A /* Build configuration list for PBXNativeTarget "VideoTextDetectorUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF5E68902C9BD7E9008DBC6A /* Debug */,
+				AF5E68912C9BD7E9008DBC6A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = AF5E685C2C9BD7E8008DBC6A /* Project object */;
+}
