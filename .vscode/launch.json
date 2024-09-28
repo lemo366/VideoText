@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "type": "swift-lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:VideoText}/whisperkit",
+            "name": "Debug whisperkit-cli (whisperkit)",
+            "program": "${workspaceFolder:VideoText}/whisperkit/.build/debug/whisperkit-cli",
+            "preLaunchTask": "swift: Build Debug whisperkit-cli (whisperkit)"
+        },
+        {
+            "type": "swift-lldb",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:VideoText}/whisperkit",
+            "name": "Release whisperkit-cli (whisperkit)",
+            "program": "${workspaceFolder:VideoText}/whisperkit/.build/release/whisperkit-cli",
+            "preLaunchTask": "swift: Build Release whisperkit-cli (whisperkit)"
+        }
+    ]
+}
