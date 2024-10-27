@@ -265,7 +265,8 @@ struct ContentView: View {
                     audioPath: extractAudio(from: selectedVideo!), 
                     decodeOptions: options)
 
-        
+                var srtIndex = 1 //添加序号计数器
+
                 for transcriptionReslut in transcriptionResluts {
                     for segment in transcriptionReslut.segments {
                         let startTime = segment.start
@@ -277,10 +278,11 @@ struct ContentView: View {
                         let formattedEndTime = formatTimeForSRT(seconds: Double(endTime))
                         
                         // 生成 SRT 格式的字符串
-                        let srtEntry = "\(formattedStartTime) --> \(formattedEndTime)\n\(text)"
+                        let srtEntry = "\(srtIndex)\n\(formattedStartTime) --> \(formattedEndTime)\n\(text)"
                         
                         // 将 SRT 条目添加到结果数组
                         transcriptionResults.append(srtEntry)
+                        srtIndex += 1 // 增加序号
                     }
                 }
             } catch {
