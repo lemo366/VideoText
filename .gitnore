@@ -1,5 +1,6 @@
 .vscode
 # whisperkit
+whisperkit
 .DS_Store
 /.build
 /Packages
@@ -65,3 +66,6 @@ fastlane/test_output
 !*.xcodeproj/xcshareddata/
 !*.xcworkspace/contents.xcworkspacedata
 /*.gcno
+
+*.json
+*.srt

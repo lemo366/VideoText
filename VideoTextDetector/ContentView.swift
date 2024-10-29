@@ -17,9 +17,10 @@ struct ContentView: View {
     @State private var transcriptionResults: [String] = [] // 存储转录结果
     @State private var player: AVPlayer?
     @State private var selectedSegment = 0 // 控制显示的分段
-    @State private var selectedModel = "base" // 选择模型
+    @State private var selectedModel = "small" // 选择模型
     @State private var progress: Double = 0.0 // 进度条的值
     @State private var modelPath: String?
+    @State private var srtContent: String = "" // 存储 SRT 格式的内容
 
     private var videoProcessor = VideoProcessor()
 
@@ -72,8 +73,8 @@ struct ContentView: View {
                     
                     // 选择模型
                     Picker("选择模型", selection: $selectedModel) {
-                        Text("base").tag("base")
-                        Text("base.en").tag("base.en")
+                        Text("small").tag("small")
+                        Text("small.en").tag("small.en")
                     }
                     .pickerStyle(SegmentedPickerStyle())
                     
@@ -120,9 +121,12 @@ struct ContentView: View {
                             }
                         }
                     } else {
-                        // 显示转录结果
-                        List(transcriptionResults, id: \.self) { result in
-                            Text(result)
+                        // 显示 SRT 格式的转录结果
+                        ScrollView {
+                            Text(srtContent)
+                                .font(.system(.body, design: .monospaced)) // 使用等宽字体
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding()
                         }
                     }
 
@@ -168,7 +172,7 @@ struct ContentView: View {
                 .frame(maxWidth: .infinity) // 右侧区域自适应宽度
             }
             .padding(10)
-            .frame(minWidth: 300)
+            .frame(minWidth: 400)
         }
         .onAppear {
             if let url = selectedVideo {
@@ -178,20 +182,121 @@ struct ContentView: View {
         .frame(minWidth: 800, minHeight: 500)
     }
 
-    func saveSRTFile() {
-        // 实现保存 SRT 文件的逻辑
-        let srtContent = transcriptionResults.joined(separator: "\n\n") // 将转录结果合并为 SRT 格式
-        let savePanel = NSSavePanel()
-        savePanel.allowedFileTypes = ["srt"]
-        savePanel.nameFieldStringValue = "transcription.srt"
+    // 简化数据模型，只保留需要的字段
+    struct WhisperTranscription: Codable {
+        let text: String
+        let segments: [Segment]
+        let language: String
         
-        savePanel.begin { result in
-            if result == .OK, let url = savePanel.url {
-                do {
-                    try srtContent.write(to: url, atomically: true, encoding: .utf8)
-                    print("SRT 文件已保存到: \(url.path)")
-                } catch {
-                    print("保存 SRT 文件时出错: \(error.localizedDescription)")
+        struct Segment: Codable {
+            let start: Double
+            let end: Double
+            let text: String
+            let words: [Word]
+        }
+        
+        struct Word: Codable {
+            let word: String
+            let start: Double
+            let end: Double
+            let probability: Double
+        }
+    }
+
+    // 修改生成 SRT 的函数
+    func generateSRTFromJSON(jsonURL: URL) -> String {
+        do {
+            // 读取并解析 JSON 文件
+            let jsonData = try Data(contentsOf: jsonURL)
+            let transcription = try JSONDecoder().decode(WhisperTranscription.self, from: jsonData)
+            
+            var srtIndex = 1
+            var srtContent = ""
+            
+            // 遍历所有段落
+            for segment in transcription.segments {
+                if !segment.words.isEmpty {
+                    var currentSentence: [WhisperTranscription.Word] = []
+                    var currentLength = 0
+                    
+                    // 处理每个单词
+                    for word in segment.words {
+                        currentSentence.append(word)
+                        currentLength += word.word.trimmingCharacters(in: .whitespaces).count
+                        
+                        // 检查是否需要分割句子
+                        let shouldSplit = word.word.contains(".") || 
+                                        word.word.contains("?") || 
+                                        word.word.contains("!") ||
+                                        (currentLength > 100 && word.word.contains(","))
+                        
+                        if shouldSplit && !currentSentence.isEmpty {
+                            // 添加 SRT 条目
+                            let text = currentSentence.map { $0.word.trimmingCharacters(in: .whitespaces) }
+                                .joined(separator: " ")
+                            let startTime = formatTimeForSRT(seconds: currentSentence.first?.start ?? 0)
+                            let endTime = formatTimeForSRT(seconds: currentSentence.last?.end ?? 0)
+                            
+                            srtContent += "\(srtIndex)\n\(startTime) --> \(endTime)\n\(text)\n\n"
+                            srtIndex += 1
+                            
+                            // 重置当前句子
+                            currentSentence = []
+                            currentLength = 0
+                        }
+                    }
+                    
+                    // 处理剩余的单词
+                    if !currentSentence.isEmpty {
+                        let text = currentSentence.map { $0.word.trimmingCharacters(in: .whitespaces) }
+                            .joined(separator: " ")
+                        let startTime = formatTimeForSRT(seconds: currentSentence.first?.start ?? 0)
+                        let endTime = formatTimeForSRT(seconds: currentSentence.last?.end ?? 0)
+                        
+                        srtContent += "\(srtIndex)\n\(startTime) --> \(endTime)\n\(text)\n\n"
+                        srtIndex += 1
+                    }
+                } else {
+                    // 如果没有单词时间戳，使用段落时间
+                    srtContent += "\(srtIndex)\n"
+                    srtContent += "\(formatTimeForSRT(seconds: segment.start)) --> \(formatTimeForSRT(seconds: segment.end))\n"
+                    srtContent += "\(segment.text)\n\n"
+                    srtIndex += 1
+                }
+            }
+            
+            return srtContent
+            
+        } catch {
+            print("解析 JSON 文件失败: \(error)")
+            print("详细错误信息: \(error.localizedDescription)")
+            return ""
+        }
+    }
+
+    // 修改保存 SRT 文件的函数
+    func saveSRTFile() {
+        let openPanel = NSOpenPanel()
+        openPanel.allowedContentTypes = [UTType(filenameExtension: "json")!]
+        openPanel.allowsMultipleSelection = false
+        
+        openPanel.begin { result in
+            if result == .OK, let jsonURL = openPanel.url {
+                let srtContent = generateSRTFromJSON(jsonURL: jsonURL)
+                
+                let savePanel = NSSavePanel()
+                savePanel.allowedContentTypes = [UTType(filenameExtension: "srt")!]
+                savePanel.nameFieldStringValue = "transcription.srt"
+                
+                savePanel.begin { result in
+                    if result == .OK, let url = savePanel.url {
+                        do {
+                            try srtContent.write(to: url, atomically: true, encoding: .utf8)
+                            print("SRT 文件已保存到: \(url.path)")
+                        } catch {
+                            print("保存 SRT 文件失败: \(error)")
+                        }
+                    }
                 }
             }
         }
@@ -226,72 +331,81 @@ struct ContentView: View {
         return formatter.string(from: date)
     }
     
+    // 首先定义一个用于写入 JSON 文件的函数
+    func writeJSONFile(result: TranscriptionResult) -> Result<String, Error> {
+        do {
+            // 获取下载目录路径
+            let downloadsPath = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
+            let timestamp = ISO8601DateFormatter().string(from: Date())
+            let jsonURL = downloadsPath.appendingPathComponent("transcription_\(timestamp).json")
+            
+            // 创建 JSON 编码器
+            let jsonEncoder = JSONEncoder()
+            jsonEncoder.outputFormatting = .prettyPrinted
+            
+            // 编码并写入文件
+            let jsonData = try jsonEncoder.encode(result)
+            try jsonData.write(to: jsonURL)
+            
+            return .success(jsonURL.absoluteString)
+        } catch {
+            return .failure(error)
+        }
+    }
+
+    // 修改转录函数
     func transcribeAudio() async {
-        isTranscribing = true // 开始转录时设置为 true
+        isTranscribing = true
         
         Task(priority: .userInitiated) {
             do {
-                // 定义模型文件夹的URL
-//                let modelFolder = "/Users/lhr/VideoText/Models/whisperkit-coreml/openai_whisper-base"
-                
-                // 创建计算选项
-//                let computeOptions = ModelComputeOptions(
-//                    audioEncoderCompute: .cpuAndGPU, // 使用CPU和GPU
-//                    textDecoderCompute: .cpuAndGPU
-//                )
-                
-                // 设置转录选项以获取时间戳
+                // 设置转录选项
                 let options = DecodingOptions(
                     verbose: true,
                     task: .transcribe,
-                    language: "\(transcriptionLanguage)", // 设置语言
-                    skipSpecialTokens: true, // 跳过特殊标记
-                    withoutTimestamps: false,// 不禁用时间戳
-                    wordTimestamps: true // 启用单词时间戳
+                    language: transcriptionLanguage,
+                    skipSpecialTokens: true,
+                    withoutTimestamps: false,
+                    wordTimestamps: true
                 )
 
-                // 初始化WhisperKit实例，传入自定义参数
+                // 初始化 WhisperKit
                 let pipe = try await WhisperKit(
-                    model:"\(selectedModel)",
-//                    modelFolder: modelFolder,
-//                    computeOptions: computeOptions,
+                    model: selectedModel,
                     verbose: true,
                     logLevel: .debug
                 )
                 
-                
-                // 转录音频文件
-                let transcriptionResluts = try await pipe.transcribe(
+                // 转录音频
+                let transcriptionResults = try await pipe.transcribe(
                     audioPath: extractAudio(from: selectedVideo!), 
-                    decodeOptions: options)
-
-                var srtIndex = 1 //添加序号计数器
-
-                for transcriptionReslut in transcriptionResluts {
-                    for segment in transcriptionReslut.segments {
-                        let startTime = segment.start
-                        let endTime = segment.end
-                        let text = segment.text
-                        
-                        // 格式化时间为 SRT 格式
-                        let formattedStartTime = formatTimeForSRT(seconds: Double(startTime))
-                        let formattedEndTime = formatTimeForSRT(seconds: Double(endTime))
-                        
-                        // 生成 SRT 格式的字符串
-                        let srtEntry = "\(srtIndex)\n\(formattedStartTime) --> \(formattedEndTime)\n\(text)"
-                        
-                        // 将 SRT 条目添加到结果数组
-                        transcriptionResults.append(srtEntry)
-                        srtIndex += 1 // 增加序号
+                    decodeOptions: options
+                )
+                
+                // 保存 JSON 文件并生成 SRT 内容
+                for result in transcriptionResults {
+                    let saveResult = writeJSONFile(result: result)
+                    switch saveResult {
+                    case .success(let path):
+                        print("JSON 文件已保存到: \(path)")
+                        // 生成 SRT 内容
+                        if let url = URL(string: path) {
+                            let srtText = generateSRTFromJSON(jsonURL: url)
+                            DispatchQueue.main.async {
+                                self.srtContent = srtText
+                                self.transcriptionResults = srtText.components(separatedBy: "\n\n")
+                            }
+                        }
+                    case .failure(let error):
+                        print("保存 JSON 文件失败: \(error.localizedDescription)")
                     }
                 }
             } catch {
-                print("初始化或转录时出错: \(error.localizedDescription)")
+                print("转录错误: \(error.localizedDescription)")
             }
         }
-      
         
-        isTranscribing = false // 转录完成后设置为 false
+        isTranscribing = false
     }
     
     func formatTimeForSRT(seconds: Double) -> String {
@@ -340,7 +454,9 @@ struct ContentView: View {
     }
     
     func searchTranscriptionResults(keyword: String) -> [String] {
-        // 过滤转录结果
-        return transcriptionResults.filter { $0.lowercased().contains(keyword.lowercased()) }
+        guard !keyword.isEmpty else { return transcriptionResults }
+        return transcriptionResults.filter { segment in
+            segment.lowercased().contains(keyword.lowercased())
+        }
     }
 }
