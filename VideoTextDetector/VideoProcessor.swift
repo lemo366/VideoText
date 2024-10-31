@@ -16,7 +16,7 @@ class VideoProcessor: ObservableObject {
         let generator = AVAssetImageGenerator(asset: asset)
         generator.appliesPreferredTrackTransform = true
 
-        for time in stride(from: 0.0, to: duration, by: 2.0) {
+        for time in stride(from: 0.0, to: duration, by: 1.0) {
             let cmTime = CMTime(seconds: time, preferredTimescale: 600)
             guard let cgImage = try? generator.copyCGImage(at: cmTime, actualTime: nil) else { continue }
             let image = NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))

@@ -3,29 +3,34 @@ import WhisperKit
 import AVFoundation
 import Vision
 import CoreML
+import AVKit
 
 struct ContentView: View {
     @State private var whisperKit: WhisperKit?
     @State private var selectedVideo: URL?
     @State private var recognitionLevel: VNRequestTextRecognitionLevel = .fast
-    @State private var recognitionLanguage: String = "en-US"
+    @State private var recognitionLanguage: String = "en-US" // 默认选择英文
     @State private var transcriptionLanguage: String = "en"
     @State private var isTranscribing = false
-    @State private var transcriptionText: String = ""
+    // @State private var transcriptionText: String = ""
     @State private var searchKeyword = ""
     @State private var detectedFrames: [DetectedFrame] = [] // 存储所有检测到的帧
     @State private var transcriptionResults: [String] = [] // 存储转录结果
     @State private var player: AVPlayer?
     @State private var selectedSegment = 0 // 控制显示的分段
-    @State private var selectedModel = "small" // 选择模型
+    @State private var selectedModel = "small.en" // 选择模型
     @State private var progress: Double = 0.0 // 进度条的值
     @State private var modelPath: String?
     @State private var srtContent: String = "" // 存储 SRT 格式的内容
-    @State private var editableSegments: [EditableSegment] = []
+    @State private var editableSegments: [EditableSegment] = []// 确保定义
     @State private var selectedSegmentId: UUID?
     @State private var cursorPosition: Int?
     @State private var editHistory = EditHistory()
     @State private var draggedSegmentId: UUID?
+    @State private var clipStartTime: String = "00:00:00"
+    @State private var clipEndTime: String = "00:00:00"
+    @FocusState private var startTimeFocused: Bool
+    @FocusState private var endTimeFocused: Bool
 
     private var videoProcessor = VideoProcessor()
 
@@ -52,10 +57,40 @@ struct ContentView: View {
                         }
                     }
 
+                    // 视频片段选择器
+                    HStack(spacing: 16) {                        
+                        HStack(spacing: 8) {
+                            Text("开始")
+                            TextField("00:00:00", text: $clipStartTime)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .frame(width: 80)
+                                .onChange(of: clipStartTime) { _ in
+                                    updatePlayerTime(from: clipStartTime)
+                                }
+                            
+                            Text("结束")
+                            TextField("00:00:00", text: $clipEndTime)
+                                .textFieldStyle(RoundedBorderTextFieldStyle())
+                                .frame(width: 80)
+                                .onChange(of: clipEndTime) { _ in
+                                    updatePlayerTime(from: clipEndTime)
+                                }
+                            
+                            Button(action: {
+                                exportVideoClip()
+                            }) {
+                                Label("导出片段", systemImage: "square.and.arrow.up")
+                                    .labelStyle(TitleAndIconLabelStyle())
+                            }
+                            .disabled(selectedVideo == nil)
+                        }
+                    }
+                    .padding(.horizontal)
+
                     HStack {
                         // 识别级别选择
                         Picker("识别级别", selection: $recognitionLevel) {
-                            Text("速").tag(VNRequestTextRecognitionLevel.fast)
+                            Text("速度").tag(VNRequestTextRecognitionLevel.fast)
                             Text("准确").tag(VNRequestTextRecognitionLevel.accurate)
                         }
                         .pickerStyle(SegmentedPickerStyle())
@@ -65,7 +100,7 @@ struct ContentView: View {
                         // 识别语言选择
                         Picker("识别语言", selection: $recognitionLanguage) {
                             Text("英语").tag("en-US")
-                            Text("中文").tag("zh-CN")
+                            Text("中文").tag("zh-Hans")
                         }
                         .pickerStyle(MenuPickerStyle())
                     }
@@ -78,8 +113,8 @@ struct ContentView: View {
                     
                     // 选择模型
                     Picker("选择模型", selection: $selectedModel) {
-                        Text("small").tag("small")
                         Text("small.en").tag("small.en")
+                        Text("small").tag("small")
                     }
                     .pickerStyle(SegmentedPickerStyle())
 
@@ -98,7 +133,7 @@ struct ContentView: View {
                             await transcribeAudio()
                         }
                     }
-                    .padding()
+                    .padding()    
                 }
                 .padding(10)
                 .frame(width: 400) // 左侧区域宽度
@@ -109,6 +144,7 @@ struct ContentView: View {
                     Picker("选择显示内容", selection: $selectedSegment) {
                         Text("视频结果").tag(0)
                         Text("转录结果").tag(1)
+                        Text("翻译结果").tag(2)
                     }
                     .pickerStyle(SegmentedPickerStyle())
                     .padding()
@@ -127,6 +163,7 @@ struct ContentView: View {
                                     Text("文本: \(frame.detectedText)")
                                 }
                             }
+                            .contentShape(Rectangle()) // 确保整个区域可点击
                             .onTapGesture {
                                 if let player = player {
                                     let targetTime = CMTime(seconds: frame.timestamp, preferredTimescale: 600)
@@ -134,7 +171,7 @@ struct ContentView: View {
                                 }
                             }
                         }
-                    } else {
+                    } else if selectedSegment == 1  {
                         VStack {
                             // 只保留导出按钮
                             HStack {
@@ -160,15 +197,18 @@ struct ContentView: View {
                             // 字幕列表
                             ScrollView {
                                 LazyVStack(alignment: .leading, spacing: 12) {
-                                    ForEach(editableSegments) { segment in
+                                    ForEach(editableSegments.indices, id: \.self) { index in
                                         SegmentView(
-                                            segment: segment,
-                                            isSelected: segment.id == selectedSegmentId,
-                                            cursorPosition: $cursorPosition,
-                                            onSelect: { selectSegment(segment.id) },
-                                            onSplit: { position in
-                                                cursorPosition = position
-                                                splitSegmentAtCursor()
+                                            segment: editableSegments[index],
+                                            isSelected: editableSegments[index].id == selectedSegmentId,
+                                            isLastSegment: index == editableSegments.count - 1, // 判断是否是最后一个段落
+                                            cursorPosition: .constant(nil), // 这里可以根据需要调整
+                                            onSelect: { selectSegment(editableSegments[index].id) },
+                                            onSplit: { wordIndex in
+                                                splitSegmentAtIndex(wordIndex, in: index)  // 传递当前段落的索引
+                                            },
+                                            onMerge: {
+                                                mergeSegments(at: index)  // 传递当前段落的索引
                                             },
                                             onTimeClick: { time in
                                                 // 跳转到视频时间点
@@ -186,14 +226,14 @@ struct ContentView: View {
                                         mergeSegments()
                                     }
                                 }
-                                .keyboardShortcut("m", modifiers: .command)
+                                // .keyboardShortcut("m", modifiers: .command)
                                 
                                 Button("分割") {
                                     if selectedSegmentId != nil && cursorPosition != nil {
                                         splitSegmentAtCursor()
                                     }
                                 }
-                                .keyboardShortcut("s", modifiers: .command)
+                                // .keyboardShortcut("s", modifiers: .command)
                                 
                                 Button("撤销") {
                                     if !editHistory.undoStack.isEmpty {
@@ -210,6 +250,12 @@ struct ContentView: View {
                                 .keyboardShortcut("z", modifiers: [.command, .shift])
                             }
                             .hidden() // 隐藏按钮但保持功能
+                        }
+                    }else if selectedSegment == 2 {
+                        // 显示翻译结果
+                        VStack {
+                            // 这里可以添加翻译结果的显示逻辑
+                            
                         }
                     }
 
@@ -256,7 +302,7 @@ struct ContentView: View {
         .frame(minWidth: 800, minHeight: 500)
     }
 
-    // 简化数据模型，只保留需要的字段
+    // 简化数据模型，只保留需要字段
     struct WhisperTranscription: Codable {
         let text: String
         let segments: [Segment]
@@ -520,7 +566,7 @@ struct ContentView: View {
         }
         
         group.wait() // 等待导出完成
-        return outputURL.path // 返回输出路径
+        return outputURL.path // 返回出路径
     }
     
     func searchTranscriptionResults(keyword: String) -> [String] {
@@ -550,14 +596,14 @@ struct ContentView: View {
     }
     
     func splitSegmentAtCursor() {
-        saveState() // ��存当前状态
+        saveState() // 存当前状态
         guard let currentIndex = editableSegments.firstIndex(where: { $0.id == selectedSegmentId }),
               let cursor = cursorPosition else { return }
         
         let segment = editableSegments[currentIndex]
         let text = segment.text
         
-        // 在光标位置分割文本
+        // 在光标位分割文本
         let index = text.index(text.startIndex, offsetBy: cursor)
         let firstPart = String(text[..<index])
         let secondPart = String(text[index...])
@@ -716,6 +762,107 @@ struct ContentView: View {
             editableSegments[index] = segment
         }
     }
+
+    // 添加辅助函数
+    func timeStringToSeconds(_ timeString: String) -> Double? {
+        let components = timeString.split(separator: ":").map { String($0) }
+        guard components.count == 3,
+              let hours = Double(components[0]),
+              let minutes = Double(components[1]),
+              let seconds = Double(components[2]) else {
+            return nil
+        }
+        return hours * 3600 + minutes * 60 + seconds
+    }
+
+    func secondsToTimeString(_ seconds: Double) -> String {
+        let hours = Int(seconds) / 3600
+        let minutes = (Int(seconds) % 3600) / 60
+        let secs = Int(seconds) % 60
+        return String(format: "%02d:%02d:%02d", hours, minutes, secs)
+    }
+
+    func exportVideoClip() {
+        guard let url = selectedVideo else { return }
+        
+        let startTime = timeStringToSeconds(clipStartTime) ?? 0
+        let endTime = timeStringToSeconds(clipEndTime) ?? 0
+        
+        let asset = AVAsset(url: url)
+        let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality)!
+        
+        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent("exported_clip.mov")
+        exportSession.outputURL = outputURL
+        exportSession.outputFileType = .mov
+        
+        // 设置时间范围
+        exportSession.timeRange = CMTimeRange(start: CMTime(seconds: startTime, preferredTimescale: 600),
+                                               duration: CMTime(seconds: endTime - startTime, preferredTimescale: 600))
+        
+        exportSession.exportAsynchronously {
+            switch exportSession.status {
+            case .completed:
+                print("视频片段导出成功: \(outputURL.path)")
+                // 可以在这里添加保存到文件的逻辑
+            case .failed:
+                print("视频段导出失败: \(exportSession.error?.localizedDescription ?? "未知错误")")
+            default:
+                print("视频片段导出状态: \(exportSession.status)")
+            }
+        }
+    }
+
+    // 更新播放器时间
+    func updatePlayerTime(from timeString: String) {
+        if let time = timeStringToSeconds(timeString) {
+            let cmTime = CMTime(seconds: time, preferredTimescale: 600)
+            player?.seek(to: cmTime, toleranceBefore: .zero, toleranceAfter: .zero) // 精确跳转
+        }
+    }
+
+    // 分割段落的逻辑
+    func splitSegmentAtIndex(_ wordIndex: Int, in segmentIndex: Int) {
+        guard segmentIndex >= 0 && segmentIndex < editableSegments.count else { return }
+        
+        let segment = editableSegments[segmentIndex]
+        let words = segment.words
+        
+        // 确保索引在有效范围内
+        guard wordIndex > 0 && wordIndex < words.count else { return } // 确保 wordIndex 大于 0
+        
+        // 找到光标位置对应的单词索引
+        let splitWords = Array(words[0..<wordIndex])  // 包含当前单词前的所有单词
+        let remainingWords = Array(words[wordIndex...])  // 包含当前单词及其后面的所有单词
+        
+        // 创建新的段落
+        let newSegment = EditableSegment(words: remainingWords)
+        
+        // 更新段落列表
+        editableSegments[segmentIndex] = EditableSegment(words: splitWords)  // 更新当前段落
+        editableSegments.insert(newSegment, at: segmentIndex + 1)  // 插入新段落
+        
+        // 更新选中状态
+        selectedSegmentId = newSegment.id  // 选中新的段落
+    }
+
+    // 合并段落的逻辑
+    func mergeSegments(at index: Int) {
+        guard index >= 0 && index < editableSegments.count - 1 else { return }
+        
+        let currentSegment = editableSegments[index]
+        let nextSegment = editableSegments[index + 1]
+        
+        // 合并两个段落的单词
+        let mergedWords = currentSegment.words + nextSegment.words
+        let mergedSegment = EditableSegment(words: mergedWords)
+        
+        // 更新段落列表
+        editableSegments[index] = mergedSegment
+        editableSegments.remove(at: index + 1)  // 移除下一个段落
+        
+        // 更新选中状态
+        selectedSegmentId = mergedSegment.id  // 选中合并后的段落
+    }
 }
 
 struct EditableWord: Identifiable {
@@ -762,48 +909,77 @@ struct EditableSegment: Identifiable {
     }
 }
 
-struct SegmentView: View {
+struct SegmentView: View {  
     let segment: EditableSegment
     let isSelected: Bool
+    let isLastSegment: Bool // 新增参数
     @Binding var cursorPosition: Int?
     let onSelect: () -> Void
-    let onSplit: (Int) -> Void
-    let onTimeClick: (Double) -> Void  // 添加时间戳点击回调
+    let onSplit: (Int) -> Void  // 分割回调
+    let onMerge: () -> Void  // 合并回调
+    let onTimeClick: (Double) -> Void  // 时间戳点击回调
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            // 可点击的时间戳
-            Text("\(TimeFormatter.formatSRT(seconds: segment.startTime)) --> \(TimeFormatter.formatSRT(seconds: segment.endTime))")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .onTapGesture {
-                    onTimeClick(segment.startTime)  // 点击时间戳跳转到开始时间
-                }
-                .background(Color.gray.opacity(0.1))  // 添加背景色表示可点击
-                .cornerRadius(2)
-            
-            // 单词级别的显示和交互（保持分割功能）
-            HStack(spacing: 4) {
-                ForEach(segment.words, id: \.id) { word in
-                    Text(word.word)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 2)
-                        .background(Color.blue.opacity(0.1))
-                        .cornerRadius(4)
-                        .onTapGesture {
-                            onSelect()
-                            let index = segment.words.firstIndex(where: { $0.id == word.id })!
-                            let position = index > 0 ? segment.words[..<index]
-                                .map { $0.word.count + 1 }
-                                .reduce(0, +) : 0
-                            onSplit(position)
-                        }
+        HStack(alignment: .top, spacing: 2) {
+            // 左侧内容
+            VStack(alignment: .leading, spacing: 4) {
+                // 合并按钮
+                if !isLastSegment { // 使用 isLastSegment
+                    Button("合并") {
+                        onMerge()  // 调用合并回调
+                    }
+                    .frame(width: 50) // 设置按钮宽度
+                    .buttonStyle(BorderlessButtonStyle())
+                    .foregroundColor(.white) // 设置按钮文本颜色为白色
+                    .background(Color.red.opacity(0.3)) // 设置按钮背景颜色
+                    .cornerRadius(5) // 设置圆角  
                 }
             }
-            .padding(8)
-            .background(isSelected ? Color.gray.opacity(0.1) : Color.clear)
-            .cornerRadius(4)
+            .padding(.top, 50) // 在左侧内容顶部添加间距
+            .frame(width: 80) // 设置左侧内容宽度
+            
+            // 右侧内容
+            VStack(alignment: .leading, spacing: 2) {
+                // 可点击的时间戳
+                Button(action: {
+                    onTimeClick(segment.startTime)  // 点击时间戳跳转到开始时间
+                }) {
+                    Text("\(TimeFormatter.formatSRT(seconds: segment.startTime)) --> \(TimeFormatter.formatSRT(seconds: segment.endTime))")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(8) // 增加内边距以扩大点击区域
+                        .background(Color.gray.opacity(0.1)) // 添加背景色表示可点击
+                        .cornerRadius(2)
+                }
+                .buttonStyle(PlainButtonStyle()) // 使用 PlainButtonStyle 以确保指针变为手指头形状
+                
+                // 可点击的段落区域
+                HStack(spacing: 4) {
+                    ForEach(segment.words, id: \.id) { word in
+                        Text(word.word)
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 1)
+                            .background(Color.blue.opacity(0.1))
+                            .cornerRadius(4)
+                            .onTapGesture {
+                                onSelect()
+                                // 触发分割，传递当前单词的索引
+                                let index = segment.words.firstIndex(where: { $0.id == word.id })!
+                                onSplit(index)  // 传递单词索引
+                            }
+                    }
+                }
+                .padding(8)
+                .background(isSelected ? Color.gray.opacity(0.1) : Color.clear)
+                .cornerRadius(4)
+                .onTapGesture {
+                    onSelect()  // 点击段落区域选择该段落
+                }    
+            }
+            .frame(maxWidth: .infinity, alignment: .leading) // 右侧内容占满剩余空间
         }
+        .padding(.vertical, 4) // 段落上下间距
+        .padding(.horizontal, 10) // 段落左右间距
     }
 }
 
