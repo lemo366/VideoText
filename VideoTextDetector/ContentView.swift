@@ -4,7 +4,9 @@ import AVFoundation
 import Vision
 import CoreML
 import AVKit
+import Translation
 
+@available(macOS 15.0, *)
 struct ContentView: View {
     @State private var whisperKit: WhisperKit?
     @State private var selectedVideo: URL?
@@ -31,6 +33,8 @@ struct ContentView: View {
     @State private var clipEndTime: String = "00:00:00"
     @FocusState private var startTimeFocused: Bool
     @FocusState private var endTimeFocused: Bool
+    @State private var showTranslation = false
+    @State private var configuration: TranslationSession.Configuration?
 
     private var videoProcessor = VideoProcessor()
 
@@ -104,12 +108,6 @@ struct ContentView: View {
                         }
                         .pickerStyle(MenuPickerStyle())
                     }
-
-                    // 进度条
-                    // if isTranscribing {
-                    //     ProgressView("正在处理视频...", value: progress, total: 100)
-                    //         .padding()
-                    // }
                     
                     // 选择模型
                     Picker("选择模型", selection: $selectedModel) {
@@ -189,52 +187,37 @@ struct ContentView: View {
                                         .imageScale(.small)
                                 }
                                 .controlSize(.small)
-                                .keyboardShortcut("e", modifiers: .command)
+                                // .keyboardShortcut("e", modifiers: .command)
                             }
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
                             
                             // 字幕列表
-                            ScrollView {
-                                LazyVStack(alignment: .leading, spacing: 12) {
-                                    ForEach(editableSegments.indices, id: \.self) { index in
-                                        SegmentView(
-                                            segment: editableSegments[index],
-                                            isSelected: editableSegments[index].id == selectedSegmentId,
-                                            isLastSegment: index == editableSegments.count - 1, // 判断是否是最后一个段落
-                                            cursorPosition: .constant(nil), // 这里可以根据需要调整
-                                            onSelect: { selectSegment(editableSegments[index].id) },
-                                            onSplit: { wordIndex in
-                                                splitSegmentAtIndex(wordIndex, in: index)  // 传递当前段落的索引
-                                            },
-                                            onMerge: {
-                                                mergeSegments(at: index)  // 传递当前段落的索引
-                                            },
-                                            onTimeClick: { time in
-                                                // 跳转到视频时间点
-                                                player?.seek(to: CMTime(seconds: time, preferredTimescale: 1000))
-                                            }
-                                        )
-                                    }
+                            List {
+                                ForEach(editableSegments.indices, id: \.self) { index in
+                                    SegmentView(
+                                        segment: editableSegments[index],
+                                        isSelected: editableSegments[index].id == selectedSegmentId,
+                                        isLastSegment: index == editableSegments.count - 1, // 判断是否是最后一个段落
+                                        cursorPosition: .constant(nil), // 这里可以根据需要调整
+                                        onSelect: { selectSegment(editableSegments[index].id) },
+                                        onSplit: { wordIndex in
+                                            splitSegmentAtIndex(wordIndex, in: index)  // 传递当前段落的索引
+                                        },
+                                        onMerge: {
+                                            mergeSegments(at: index)  // 传递当前段落的索引
+                                        },
+                                        onTimeClick: { time in
+                                            // 跳转到视频时间点
+                                            player?.seek(to: CMTime(seconds: time, preferredTimescale: 1000))
+                                        }
+                                    )
                                 }
-                                .padding()
                             }
+                            .padding()
+
                             // 隐藏的快捷键按钮
                             Group {
-                                Button("合并") {
-                                    if selectedSegmentId != nil {
-                                        mergeSegments()
-                                    }
-                                }
-                                // .keyboardShortcut("m", modifiers: .command)
-                                
-                                Button("分割") {
-                                    if selectedSegmentId != nil && cursorPosition != nil {
-                                        splitSegmentAtCursor()
-                                    }
-                                }
-                                // .keyboardShortcut("s", modifiers: .command)
-                                
                                 Button("撤销") {
                                     if !editHistory.undoStack.isEmpty {
                                         undo()
@@ -252,54 +235,59 @@ struct ContentView: View {
                             .hidden() // 隐藏按钮但保持功能
                         }
                     }else if selectedSegment == 2 {
-                        // 显示翻译结果
                         VStack {
-                            // 这里可以添加翻译结果的显示逻辑
-                            
-                        }
-                    }
+                            HStack {
+                                Spacer() // 填充空白区域，将按钮推到右侧
+                                Button("翻译") {
+                                    if configuration == nil {
+                                        configuration = TranslationSession.Configuration(source: .init(identifier: "en-US"), target: .init(identifier: "zh-Hans"))
+                                    }
+                                }
+                                .buttonStyle(.bordered)
 
-                    // 进度条
-                    // if isTranscribing {
-                    //     ProgressView("正在转录...", value: progress, total: 100)
-                    //         .padding()
-                    // }
+                                Button(action:{
+                                    exportSubtitles()
+                                }){
+                                    // 按钮的内容
+                                    Image(systemName: "square.and.arrow.up")
+                                        .imageScale(.small)
+                                    Text("导出双语字幕")            
+                                }
+                            }
 
-                    // 搜索框和搜索按钮
-                    HStack {
-                        TextField("搜索关键词", text: $searchKeyword)
-                            .textFieldStyle(RoundedBorderTextFieldStyle())
-                            .padding()
-                        
-                        Button("搜索") {
-                            // 过滤搜索结果
-                            if selectedSegment == 0 {
-                                // 搜索视频结果
-                                detectedFrames = videoProcessor.searchKeyword(searchKeyword)
-                            } else {
-                                // 高亮显示转录结果中搜索的关键字
-                                transcriptionResults = searchTranscriptionResults(keyword: searchKeyword)
+                            List {
+                                ForEach(editableSegments.indices, id: \.self) { index in
+                                    let segment = editableSegments[index]
+                                    VStack(alignment: .leading) {
+                                        Text(segment.text) // 显示原始文本
+                                        if let translatedText = segment.translatedText {
+                                            Text(translatedText) // 显示翻译结果
+                                                .foregroundColor(.gray)
+                                        }
+                                    }
+                                }
+                            }
+                            .translationTask(configuration) { session in
+                                let requests = editableSegments.map { TranslationSession.Request(sourceText: $0.text, clientIdentifier: $0.id.uuidString) }
+                                
+                                if let responses = try? await session.translations(from: requests) {
+                                    responses.forEach { response in
+                                        updateTranslation(response: response)
+                                    }
+                                }
                             }
                         }
                     }
-
-                    // 保存 SRT 文件
-                    // Button("导出 SRT 字幕") {
-                    //     saveSRTFile()
-                    // }
-                    .padding()
                 }
-                .frame(maxWidth: .infinity) // 右侧区域自适应宽度
             }
-            .padding(10)
-            .frame(minWidth: 300)
         }
         .onAppear {
             if let url = selectedVideo {
                 player = AVPlayer(url: url)
             }
         }
-        .frame(minWidth: 800, minHeight: 500)
+
+        .frame(minWidth: 800, minHeight: 450)
     }
 
     // 简化数据模型，只保留需要字段
@@ -320,6 +308,41 @@ struct ContentView: View {
             let start: Double
             let end: Double
             let probability: Double
+        }
+    }
+
+    private func updateTranslation(response: TranslationSession.Response) {
+        guard let index = editableSegments.firstIndex(where: { $0.id.uuidString == response.clientIdentifier }) else {
+            return
+        }
+        editableSegments[index].translatedText = response.targetText // 更新翻译结果
+    }
+
+    private func exportSubtitles() {
+        var srtContent = ""
+        for (index, segment) in editableSegments.enumerated() {
+            srtContent += "\(index + 1)\n"
+            srtContent += "\(formatTimeForSRT(seconds: segment.startTime)) --> \(formatTimeForSRT(seconds: segment.endTime))\n"
+            srtContent += "\(segment.text)\n"
+            if let translatedText = segment.translatedText {
+                srtContent += "\(translatedText)\n\n"
+            }
+        }
+
+        // 保存到文件
+        let savePanel = NSSavePanel()
+        savePanel.allowedContentTypes = [.text]
+        savePanel.nameFieldStringValue = "dualsubtitles.srt"
+        
+        savePanel.begin { result in
+            if result == .OK, let url = savePanel.url {
+                do {
+                    try srtContent.write(to: url, atomically: true, encoding: .utf8)
+                    print("双语字幕已保存到: \(url.path)")
+                } catch {
+                    print("保存字幕文件失败: \(error)")
+                }
+            }
         }
     }
 
@@ -393,34 +416,6 @@ struct ContentView: View {
             return ""
         }
     }
-
-    // 修改保存 SRT 文件的函数
-    // func saveSRTFile() {
-    //     let openPanel = NSOpenPanel()
-    //     openPanel.allowedContentTypes = [UTType(filenameExtension: "json")!]
-    //     openPanel.allowsMultipleSelection = false
-        
-    //     openPanel.begin { result in
-    //         if result == .OK, let jsonURL = openPanel.url {
-    //             let srtContent = generateSRTFromJSON(jsonURL: jsonURL)
-                
-    //             let savePanel = NSSavePanel()
-    //             savePanel.allowedContentTypes = [UTType(filenameExtension: "srt")!]
-    //             savePanel.nameFieldStringValue = "transcription.srt"
-                
-    //             savePanel.begin { result in
-    //                 if result == .OK, let url = savePanel.url {
-    //                     do {
-    //                         try srtContent.write(to: url, atomically: true, encoding: .utf8)
-    //                         print("SRT 文件已保存到: \(url.path)")
-    //                     } catch {
-    //                         print("保存 SRT 文件失败: \(error)")
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
     
     func selectVideo() {
         let panel = NSOpenPanel()
@@ -452,7 +447,7 @@ struct ContentView: View {
     }
     
     // 首先定义一个用于写入 JSON 文件的函数
-    func writeJSONFile(result: TranscriptionResult) -> Result<String, Error> {
+    func writeJSONFile(result: TranscriptionResult, to url: URL) -> Result<String, Error> {
         do {
             // 获取下载目录路径
             let downloadsPath = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
@@ -504,10 +499,14 @@ struct ContentView: View {
                 
                 // 保存 JSON 文件并处理转录结果
                 for result in transcriptionResults {
-                    let saveResult = writeJSONFile(result: result)
+                    // 使用 FileManager 获取临时目录
+                    let tempDirectory = FileManager.default.temporaryDirectory
+                    let tempFileURL = tempDirectory.appendingPathComponent("transcriptionResult_\(UUID().uuidString).json")
+    
+                    let saveResult = writeJSONFile(result: result, to: tempFileURL)
                     switch saveResult {
                     case .success(let path):
-                        print("JSON 文件已保存到: \(path)")
+                        print("JSON 文件已保存到临时目录: \(path)")
                         // 将转录结果转换为可编辑段落
                         if let url = URL(string: path) {
                             createEditableSegmentsFromJSON(url)
@@ -704,8 +703,15 @@ struct ContentView: View {
         for (index, segment) in editableSegments.enumerated() {
             srtContent += "\(index + 1)\n"
             srtContent += "\(formatTimeForSRT(seconds: segment.startTime)) --> \(formatTimeForSRT(seconds: segment.endTime))\n"
-            srtContent += "\(segment.text)\n\n"
-        }
+            
+            // 处理原始文本，确保单词之间只有一个空格，并去除首尾空格
+            let originalText = segment.text
+                .components(separatedBy: .whitespaces)
+                .filter { !$0.isEmpty }
+                .joined(separator: " ")
+                .trimmingCharacters(in: .whitespaces) // 去除首尾空格
+                srtContent += "\(originalText)\n\n"
+            }
         return srtContent
     }
     
@@ -888,6 +894,8 @@ struct EditableSegment: Identifiable {
     var endTime: Double {
         words.last?.end ?? 0
     }
+
+    var translatedText: String? // 新增属性用于存储翻译结果
     
     // 添加初始化方法
     init(id: UUID = UUID(), words: [EditableWord]) {
@@ -922,7 +930,7 @@ struct SegmentView: View {
     var body: some View {
         HStack(alignment: .top, spacing: 2) {
             // 左侧内容
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 // 合并按钮
                 if !isLastSegment { // 使用 isLastSegment
                     Button("合并") {

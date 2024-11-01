@@ -16,6 +16,7 @@
 		AF5E68862C9BD7E9008DBC6A /* VideoTextDetectorUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF5E68852C9BD7E9008DBC6A /* VideoTextDetectorUITestsLaunchTests.swift */; };
 		AF5E68942C9BD90B008DBC6A /* Vision.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF5E68932C9BD90B008DBC6A /* Vision.framework */; };
 		AF5E68962C9BD915008DBC6A /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF5E68952C9BD915008DBC6A /* AVFoundation.framework */; };
+		AF807F822CD4B9DE00F748E9 /* Translation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF807F812CD4B9DE00F748E9 /* Translation.framework */; };
 		AF9B204A2CA52F7900838404 /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = AF9B20492CA52F7900838404 /* WhisperKit */; };
 		AF9B204C2CA52F7E00838404 /* whisperkit-cli in Frameworks */ = {isa = PBXBuildFile; productRef = AF9B204B2CA52F7E00838404 /* whisperkit-cli */; };
 		AFD935F72C9BDC3E00F07B3C /* VideoProcessor.swift in Sources */ = {isa = PBXBuildFile; fileRef = AFD935F62C9BDC3E00F07B3C /* VideoProcessor.swift */; };
@@ -68,6 +69,7 @@
 		AF5E68852C9BD7E9008DBC6A /* VideoTextDetectorUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoTextDetectorUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		AF5E68932C9BD90B008DBC6A /* Vision.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Vision.framework; path = System/Library/Frameworks/Vision.framework; sourceTree = SDKROOT; };
 		AF5E68952C9BD915008DBC6A /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		AF807F812CD4B9DE00F748E9 /* Translation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Translation.framework; path = System/Library/Frameworks/Translation.framework; sourceTree = SDKROOT; };
 		AFD935F62C9BDC3E00F07B3C /* VideoProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoProcessor.swift; sourceTree = "<group>"; };
 		AFD935F82C9BDC7500F07B3C /* VideoPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayer.swift; sourceTree = "<group>"; };
 		AFE603A12CA53C4E00546E70 /* CoreML.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreML.framework; path = System/Library/Frameworks/CoreML.framework; sourceTree = SDKROOT; };
@@ -78,6 +80,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AF807F822CD4B9DE00F748E9 /* Translation.framework in Frameworks */,
 				AF9B204A2CA52F7900838404 /* WhisperKit in Frameworks */,
 				AF9B204C2CA52F7E00838404 /* whisperkit-cli in Frameworks */,
 				AFE603A22CA53C4E00546E70 /* CoreML.framework in Frameworks */,
@@ -166,6 +169,7 @@
 		AF5E68922C9BD90B008DBC6A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				AF807F812CD4B9DE00F748E9 /* Translation.framework */,
 				AFE603A12CA53C4E00546E70 /* CoreML.framework */,
 				AF5E68952C9BD915008DBC6A /* AVFoundation.framework */,
 				AF5E68932C9BD90B008DBC6A /* Vision.framework */,
