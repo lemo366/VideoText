@@ -133,13 +133,12 @@ struct ContentView: View {
                     }
                     .padding()    
                 }
-                .padding(10)
-                .frame(width: 400) // 左侧区域宽度
+                .frame(width: geometry.size.width * 0.4, height: geometry.size.height) // 右侧列占 60% 宽度，填满高度
                 
                 // 右侧内容
                 VStack(spacing: 10) {
                     // 分段控件
-                    Picker("选择显示内容", selection: $selectedSegment) {
+                    Picker("", selection: $selectedSegment) {
                         Text("视频结果").tag(0)
                         Text("转录结果").tag(1)
                         Text("翻译结果").tag(2)
@@ -169,6 +168,7 @@ struct ContentView: View {
                                 }
                             }
                         }
+                        .frame(maxHeight: .infinity)
                     } else if selectedSegment == 1  {
                         VStack {
                             // 只保留导出按钮
@@ -187,10 +187,7 @@ struct ContentView: View {
                                         .imageScale(.small)
                                 }
                                 .controlSize(.small)
-                                // .keyboardShortcut("e", modifiers: .command)
                             }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
                             
                             // 字幕列表
                             List {
@@ -214,26 +211,8 @@ struct ContentView: View {
                                     )
                                 }
                             }
-                            .padding()
-
-                            // 隐藏的快捷键按钮
-                            Group {
-                                Button("撤销") {
-                                    if !editHistory.undoStack.isEmpty {
-                                        undo()
-                                    }
-                                }
-                                .keyboardShortcut("z", modifiers: .command)
-                                
-                                Button("重做") {
-                                    if !editHistory.redoStack.isEmpty {
-                                        redo()
-                                    }
-                                }
-                                .keyboardShortcut("z", modifiers: [.command, .shift])
-                            }
-                            .hidden() // 隐藏按钮但保持功能
                         }
+                        .frame(maxHeight: .infinity)
                     }else if selectedSegment == 2 {
                         VStack {
                             HStack {
@@ -276,9 +255,11 @@ struct ContentView: View {
                                     }
                                 }
                             }
+                            .frame(maxHeight: .infinity)
                         }
                     }
                 }
+                .frame(width: geometry.size.width * 0.6, height: geometry.size.height) // 右侧列占 60% 宽度，填满高度
             }
         }
         .onAppear {
@@ -286,8 +267,7 @@ struct ContentView: View {
                 player = AVPlayer(url: url)
             }
         }
-
-        .frame(minWidth: 800, minHeight: 450)
+        .frame(minWidth: 800, minHeight: 600)
     }
 
     // 简化数据模型，只保留需要字段
