@@ -9,6 +9,7 @@ struct TextSegment: Identifiable {
     let startTime: Double
     let endTime: Double
     let frames: [DetectedFrame]
+    let textBounds: CGRect
 }
 
 class VideoProcessor: ObservableObject {
@@ -25,7 +26,7 @@ class VideoProcessor: ObservableObject {
         }
         
         var detectedFrames: [DetectedFrame] = []
-        var currentSegments: [String: (startTime: Double, frames: [DetectedFrame])] = [:]
+        var currentSegments: [String: (startTime: Double, frames: [DetectedFrame], textBounds: CGRect)] = [:]
         
         let asset = AVAsset(url: url)
         let duration = try await asset.load(.duration)
@@ -51,12 +52,12 @@ class VideoProcessor: ObservableObject {
                 let nsImage = NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width, height: cgImage.height))
                 
                 // 执行文本检测
-                if let detectedText = try await detectText(in: nsImage, recognitionLevel: recognitionLevel, recognitionLanguage: recognitionLanguage),
-                   !detectedText.isEmpty {
+                if let (detectedText, textBounds) = try await detectText(in: nsImage, recognitionLevel: recognitionLevel, recognitionLanguage: recognitionLanguage) {
                     let frame = DetectedFrame(
                         image: nsImage,
                         detectedText: detectedText,
-                        timestamp: timeInSeconds
+                        timestamp: timeInSeconds,
+                        textBounds: textBounds
                     )
                     detectedFrames.append(frame)
                     updateTextSegments(frame: frame, currentSegments: &currentSegments)
@@ -88,7 +89,8 @@ class VideoProcessor: ObservableObject {
                 text: cleanText,
                 startTime: segmentInfo.startTime,
                 endTime: segmentInfo.frames.last?.timestamp ?? segmentInfo.startTime,
-                frames: segmentInfo.frames
+                frames: segmentInfo.frames,
+                textBounds: segmentInfo.textBounds
             )
             newSegments.append(textSegment)
             print("添加文本段: \(cleanText), 开始时间: \(segmentInfo.startTime), 结束时间: \(segmentInfo.frames.last?.timestamp ?? segmentInfo.startTime), 帧数: \(segmentInfo.frames.count)")
@@ -106,7 +108,7 @@ class VideoProcessor: ObservableObject {
         return detectedFrames
     }
     
-    private func detectText(in image: NSImage, recognitionLevel: VNRequestTextRecognitionLevel, recognitionLanguage: String) async throws -> String? {
+    private func detectText(in image: NSImage, recognitionLevel: VNRequestTextRecognitionLevel, recognitionLanguage: String) async throws -> (String, CGRect)? {
         guard let cgImage = image.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
             return nil
         }
@@ -123,8 +125,41 @@ class VideoProcessor: ObservableObject {
                     return
                 }
                 
-                let detectedText = observations.compactMap { $0.topCandidates(1).first?.string }.joined(separator: " ")
-                continuation.resume(returning: detectedText)
+                var detectedText = ""
+                var unionRect = CGRect.zero
+                var isFirst = true
+                
+                for observation in observations {
+                    if let candidate = observation.topCandidates(1).first {
+                        if !isFirst {
+                            detectedText += " "
+                        }
+                        detectedText += candidate.string
+                        
+                        // 转换边界框坐标
+                        let boundingBox = observation.boundingBox
+                        let convertedRect = CGRect(
+                            x: boundingBox.origin.x * CGFloat(cgImage.width),
+                            y: (1 - boundingBox.origin.y - boundingBox.height) * CGFloat(cgImage.height),
+                            width: boundingBox.width * CGFloat(cgImage.width),
+                            height: boundingBox.height * CGFloat(cgImage.height)
+                        )
+                        
+                        if isFirst {
+                            unionRect = convertedRect
+                        } else {
+                            unionRect = unionRect.union(convertedRect)
+                        }
+                        
+                        isFirst = false
+                    }
+                }
+                
+                if !detectedText.isEmpty {
+                    continuation.resume(returning: (detectedText, unionRect))
+                } else {
+                    continuation.resume(returning: nil)
+                }
             }
             
             request.recognitionLevel = recognitionLevel
@@ -140,7 +175,7 @@ class VideoProcessor: ObservableObject {
     }
     
     // 添加新方法用于更新文本段
-    private func updateTextSegments(frame: DetectedFrame, currentSegments: inout [String: (startTime: Double, frames: [DetectedFrame])]) {
+    private func updateTextSegments(frame: DetectedFrame, currentSegments: inout [String: (startTime: Double, frames: [DetectedFrame], textBounds: CGRect)]) {
         guard !frame.detectedText.isEmpty else { return }
         
         if let existingSegment = currentSegments[frame.detectedText] {
@@ -148,14 +183,16 @@ class VideoProcessor: ObservableObject {
             if frame.timestamp - existingSegment.frames.last!.timestamp < 2.0 {
                 // 添加新帧到现有段落
                 currentSegments[frame.detectedText]?.frames.append(frame)
+                // 更新文本边界为所有帧的并集
+                currentSegments[frame.detectedText]?.textBounds = existingSegment.textBounds.union(frame.textBounds)
             } else {
                 // 如果时间间隔太大，创建新的段落（使用不同的键来区分）
                 let newKey = "\(frame.detectedText)_\(frame.timestamp)"
-                currentSegments[newKey] = (startTime: frame.timestamp, frames: [frame])
+                currentSegments[newKey] = (startTime: frame.timestamp, frames: [frame], textBounds: frame.textBounds)
             }
         } else {
             // 创建新段落
-            currentSegments[frame.detectedText] = (startTime: frame.timestamp, frames: [frame])
+            currentSegments[frame.detectedText] = (startTime: frame.timestamp, frames: [frame], textBounds: frame.textBounds)
         }
     }
     
@@ -170,4 +207,5 @@ struct DetectedFrame: Identifiable {
     let image: NSImage
     let detectedText: String
     let timestamp: Double
+    let textBounds: CGRect
 }

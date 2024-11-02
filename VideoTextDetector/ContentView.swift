@@ -35,6 +35,7 @@ struct ContentView: View {
     @FocusState private var endTimeFocused: Bool
     @State private var showTranslation = false
     @State private var configuration: TranslationSession.Configuration?
+    @State private var selectedFrames: Set<UUID> = []
 
     @StateObject private var videoProcessor = VideoProcessor()
 
@@ -157,14 +158,6 @@ struct ContentView: View {
                     // 主要内容区域
                     if selectedSegment == 0 {
                         VStack(alignment: .leading, spacing: 0) {
-                            // 搜索结果统计
-                            if !searchKeyword.isEmpty {
-                                Text("找到 \(filteredSegments.count) 个匹配结果")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                    .padding(.horizontal)
-                            }
-
                             if videoProcessor.isProcessing {
                                 VStack {
                                     ProgressView("正在处理视频... \(videoProcessor.progress)%")
@@ -179,10 +172,33 @@ struct ContentView: View {
                                         .padding(.top, 5)
                                 }
                             }
-                            
-                            Text("检测到 \(videoProcessor.textSegments.count) 个文本段落")
-                                .font(.headline)
-                                .padding(.horizontal)
+
+                            // 添加导出按钮和选中计数
+                            HStack {
+                                Text("检测到 \(videoProcessor.textSegments.count) 个文本段落")
+                                    .font(.headline)
+                                
+                                Spacer()
+                                
+                                // 只有当有项时才显示导出按钮
+                                if !selectedFrames.isEmpty {
+                                    Button(action: {
+                                        exportLongImage()
+                                    }) {
+                                        HStack {
+                                            Image(systemName: "rectangle.stack")
+                                            Text("导出长图(\(selectedFrames.count))")
+                                        }
+                                        .padding(.horizontal, 12)
+                                        .padding(.vertical, 6)
+                                        .background(Color.blue)
+                                        .foregroundColor(.white)
+                                        .cornerRadius(6)
+                                    }
+                                }
+                            }
+                            .padding(.horizontal)
+                            .padding(.vertical, 8)
                             
                             // 卡片网格
                             ScrollView {
@@ -192,12 +208,10 @@ struct ContentView: View {
                                     GridItem(.flexible(), spacing: 24)
                                 ], spacing: 24) {
                                     ForEach(filteredSegments.filter { !$0.text.isEmpty }) { segment in
-                                        let cardWidth = (geometry.size.width * 0.7 - 96 - 48) / 3 // 调整卡片宽度计算
-                                        // 96 = 左右边距(24 * 2 = 48) + 列间距(24 * 2 = 48)
-                                        // 48 = 额外的安全间距
+                                        let cardWidth = (geometry.size.width * 0.7 - 96 - 48) / 3
                                         
                                         VStack(alignment: .leading, spacing: 8) {
-                                            // 时间戳和文本信息
+                                            // 时间戳和选择按钮
                                             HStack {
                                                 Text("\(formatTime(seconds: segment.startTime)) - \(formatTime(seconds: segment.endTime))")
                                                     .font(.caption)
@@ -208,6 +222,22 @@ struct ContentView: View {
                                                     .cornerRadius(4)
                                                 
                                                 Spacer()
+                                                
+                                                // 添加选择按钮
+                                                Button(action: {
+                                                    if selectedFrames.contains(segment.id) {
+                                                        selectedFrames.remove(segment.id)
+                                                    } else {
+                                                        selectedFrames.insert(segment.id)
+                                                    }
+                                                }) {
+                                                    Image(systemName: selectedFrames.contains(segment.id) ? 
+                                                        "checkmark.circle.fill" : "circle")
+                                                        .foregroundColor(selectedFrames.contains(segment.id) ? 
+                                                            .blue : .gray)
+                                                        .imageScale(.large)
+                                                }
+                                                .buttonStyle(PlainButtonStyle())
                                             }
                                             
                                             // 文本内容（带高亮）
@@ -227,12 +257,17 @@ struct ContentView: View {
                                                     .shadow(radius: 2)
                                             }
                                         }
-                                        .frame(width: cardWidth - 8, height: 180)// 固定卡片大小
+                                        .frame(width: cardWidth - 32)
                                         .padding(8)
-                                        .background(Color.secondary.opacity(0.1))
+                                        .background(selectedFrames.contains(segment.id) ? 
+                                            Color.blue.opacity(0.1) : Color.secondary.opacity(0.1))
                                         .cornerRadius(8)
                                         .shadow(radius: 1)
-                                        .contentShape(Rectangle())
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .stroke(selectedFrames.contains(segment.id) ? 
+                                                    Color.blue : Color.clear, lineWidth: 2)
+                                        )
                                         .onTapGesture {
                                             if let player = player {
                                                 let targetTime = CMTime(seconds: segment.startTime, preferredTimescale: 600)
@@ -254,10 +289,21 @@ struct ContentView: View {
                         }
                     } else if selectedSegment == 1  {
                         VStack {
+                            // 添加进度指示器部分
+                            if isTranscribing {
+                                VStack {
+                                    ProgressView("正在转录音频...")
+                                        .padding()
+                                    Text("转录时间可能较长，请耐心等待...")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+
                             // 只保留导出按钮
                             HStack {
                                 Spacer()
-                                Menu{
+                                Menu {
                                     Button("导出 SRT") {
                                         exportToSRT()
                                     }
@@ -278,18 +324,21 @@ struct ContentView: View {
                                     SegmentView(
                                         segment: editableSegments[index],
                                         isSelected: editableSegments[index].id == selectedSegmentId,
-                                        isLastSegment: index == editableSegments.count - 1, // 判断是否是最后一个段落
-                                        cursorPosition: .constant(nil), // 这里可以根据需要调整
+                                        isLastSegment: index == editableSegments.count - 1,
+                                        cursorPosition: $cursorPosition,
                                         onSelect: { selectSegment(editableSegments[index].id) },
                                         onSplit: { wordIndex in
-                                            splitSegmentAtIndex(wordIndex, in: index)  // 传递当前段落的索引
+                                            splitSegmentAtIndex(wordIndex, in: index)
                                         },
                                         onMerge: {
                                             mergeSegments(at: index)  // 传递当前段落的索引
                                         },
                                         onTimeClick: { time in
-                                            // 跳转到视频时间点
-                                            player?.seek(to: CMTime(seconds: time, preferredTimescale: 1000))
+                                            if let player = player {
+                                                // 使用 ceil 向上取整，确保时间对齐
+                                                let targetTime = CMTime(seconds: ceil(time), preferredTimescale: 1000)
+                                                player.seek(to: targetTime, toleranceBefore: .zero, toleranceAfter: .zero)
+                                            }
                                         }
                                     )
                                 }
@@ -321,11 +370,11 @@ struct ContentView: View {
                                 ForEach(editableSegments.indices, id: \.self) { index in
                                     let segment = editableSegments[index]
                                     VStack(alignment: .leading) {
-                                        Text(segment.text) // 显示原始文本
                                         if let translatedText = segment.translatedText {
                                             Text(translatedText) // 显示翻译结果
                                                 .foregroundColor(.gray)
                                         }
+                                        Text(segment.text) // 显示原始文本
                                     }
                                 }
                             }
@@ -391,17 +440,39 @@ struct ContentView: View {
         guard let index = editableSegments.firstIndex(where: { $0.id.uuidString == response.clientIdentifier }) else {
             return
         }
-        editableSegments[index].translatedText = response.targetText // 更新翻译结果
-    }
+
+        // 在保存翻译结果时就处理好格式
+        let formattedText = response.targetText
+            .components(separatedBy: .whitespaces)
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+            .trimmingCharacters(in: .whitespaces)
+            editableSegments[index].translatedText = response.targetText // 更新翻译结果
+        }
 
     private func exportSubtitles() {
         var srtContent = ""
         for (index, segment) in editableSegments.enumerated() {
             srtContent += "\(index + 1)\n"
             srtContent += "\(formatTimeForSRT(seconds: segment.startTime)) --> \(formatTimeForSRT(seconds: segment.endTime))\n"
-            srtContent += "\(segment.text)\n"
+            // 如果有翻译文本，先显示中文翻译，再显示英文原文
             if let translatedText = segment.translatedText {
-                srtContent += "\(translatedText)\n\n"
+                srtContent += "\(translatedText)\n" // 中文翻译
+                // 处理原始文本，确保单词之间只有一个空格，并去除首尾空格
+            let originalText = segment.text
+                .components(separatedBy: .whitespaces)
+                .filter { !$0.isEmpty }
+                .joined(separator: " ")
+                .trimmingCharacters(in: .whitespaces) // 去除首尾空格
+                srtContent += "\(originalText)\n\n"
+            } else {
+                // 处理原始文本，确保单词之间只有一个空格，并去除首尾空格
+                let originalText = segment.text
+                    .components(separatedBy: .whitespaces)
+                    .filter { !$0.isEmpty }
+                    .joined(separator: " ")
+                    .trimmingCharacters(in: .whitespaces) // 去除首尾空格
+                srtContent += "\(originalText)\n\n"// 如果没有翻译，只显示原文
             }
         }
 
@@ -416,13 +487,13 @@ struct ContentView: View {
                     try srtContent.write(to: url, atomically: true, encoding: .utf8)
                     print("双语字幕已保存到: \(url.path)")
                 } catch {
-                    print("存字幕文件失败: \(error)")
+                    print("保存字幕文件失败: \(error)")
                 }
             }
         }
     }
 
-    // ���改生成 SRT 的函数
+    // 改生成 SRT 的函数
     func generateSRTFromJSON(jsonURL: URL) -> String {
         do {
             // 读取并解析 JSON 文件
@@ -509,7 +580,7 @@ struct ContentView: View {
                     // 处理视频并获取检测到的帧
                     detectedFrames = try await videoProcessor.processVideo(url: selectedVideo!, recognitionLevel: recognitionLevel, recognitionLanguage: recognitionLanguage)
                 } catch {
-                    print("处理视频失败: \(error)")
+                    print("处理视失败: \(error)")
                 }
             }
         }
@@ -663,7 +734,7 @@ struct ContentView: View {
     }
     
     func mergeSegments() {
-        saveState() // 保存当前状态
+        saveState() // 保存当状态
         guard let currentIndex = editableSegments.firstIndex(where: { $0.id == selectedSegmentId }),
               currentIndex < editableSegments.count - 1 else { return }
         
@@ -735,7 +806,7 @@ struct ContentView: View {
                         )
                     })
                 }
-                print("已加载 \(self.editableSegments.count) 个字幕段落")
+                print("已加 \(self.editableSegments.count) 个字幕段落")
             }
         } catch {
             print("解析 JSON 文件失败: \(error)")
@@ -877,25 +948,46 @@ struct ContentView: View {
         let endTime = timeStringToSeconds(clipEndTime) ?? 0
         
         let asset = AVAsset(url: url)
-        let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality)!
+        guard let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetHighestQuality) else { return }
         
-        let outputURL = FileManager.default.temporaryDirectory.appendingPathComponent("exported_clip.mov")
-        exportSession.outputURL = outputURL
-        exportSession.outputFileType = .mov
+        // 创建保存面板
+        let savePanel = NSSavePanel()
+        savePanel.allowedContentTypes = [UTType.mpeg4Movie]
         
-        // 设置时间范围
-        exportSession.timeRange = CMTimeRange(start: CMTime(seconds: startTime, preferredTimescale: 600),
-                                               duration: CMTime(seconds: endTime - startTime, preferredTimescale: 600))
+        // 设置默认文件名（带时间戳）
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyyMMdd_HHmmss"
+        let timestamp = dateFormatter.string(from: Date())
+        savePanel.nameFieldStringValue = "clip_\(timestamp).mp4"
         
-        exportSession.exportAsynchronously {
-            switch exportSession.status {
-            case .completed:
-                print("视频片段导出成功: \(outputURL.path)")
-                // 可以在里添加保存到文件逻辑
-            case .failed:
-                print("视频段导出失败: \(exportSession.error?.localizedDescription ?? "未知错误")")
-            default:
-                print("视频片段导出状态: \(exportSession.status)")
+        // 显示保存面板
+        savePanel.begin { result in
+            if result == .OK, let outputURL = savePanel.url {
+                // 配置导出会话
+                exportSession.outputURL = outputURL
+                exportSession.outputFileType = .mp4
+                exportSession.timeRange = CMTimeRange(
+                    start: CMTime(seconds: startTime, preferredTimescale: 600),
+                    duration: CMTime(seconds: endTime - startTime, preferredTimescale: 600)
+                )
+                
+                // 开始导出
+                exportSession.exportAsynchronously {
+                    DispatchQueue.main.async {
+                        switch exportSession.status {
+                        case .completed:
+                            print("视频片段已成功导出到: \(outputURL.path)")
+                        case .failed:
+                            if let error = exportSession.error {
+                                print("视频导出失败: \(error.localizedDescription)")
+                            }
+                        case .cancelled:
+                            print("视频导出被取消")
+                        default:
+                            break
+                        }
+                    }
+                }
             }
         }
     }
@@ -1003,6 +1095,102 @@ struct ContentView: View {
             segment.text.localizedCaseInsensitiveContains(searchKeyword)
         }
     }
+
+    func exportLongImage() {
+        let selectedSegments = videoProcessor.textSegments.filter { selectedFrames.contains($0.id) }
+        guard !selectedSegments.isEmpty else { return }
+        
+        // 获取第一个段落的完整帧
+        guard let firstSegment = selectedSegments.first,
+              let firstFrame = firstSegment.frames.first else { return }
+        
+        let width = firstFrame.image.size.width
+        let firstFrameHeight = firstFrame.image.size.height
+        
+        // 计算总高度：第一帧高度 + 后续帧文本区域高度（无额外padding）
+        var totalHeight = firstFrameHeight
+        for segment in selectedSegments.dropFirst() {
+            if let frame = segment.frames.first {
+                totalHeight += frame.textBounds.height
+            }
+        }
+        
+        // 创建长条形图片
+        let finalImage = NSImage(size: NSSize(width: width, height: totalHeight))
+        finalImage.lockFocus()
+        
+        // 从顶部开始绘制第一帧（完整显示）
+        firstFrame.image.draw(in: NSRect(
+            x: 0,
+            y: totalHeight - firstFrameHeight,
+            width: width,
+            height: firstFrameHeight
+        ))
+        
+        // 当前绘制位置
+        var currentY = totalHeight - firstFrameHeight
+        
+        // 绘制后续帧（只显示文本区域，无缝拼接）
+        for segment in selectedSegments.dropFirst() {
+            guard let frame = segment.frames.first else { continue }
+            
+            let textRect = frame.textBounds
+            let textAreaHeight = textRect.height
+            
+            // 计算源图片中文本区域的位置（无padding）
+            let sourceRect = NSRect(
+                x: 0,
+                y: frame.image.size.height - textRect.maxY,
+                width: width,
+                height: textAreaHeight
+            )
+            
+            // 无缝拼接到上一帧
+            currentY -= textAreaHeight
+            frame.image.draw(
+                in: NSRect(
+                    x: 0,
+                    y: currentY,
+                    width: width,
+                    height: textAreaHeight
+                ),
+                from: sourceRect,
+                operation: .sourceOver,
+                fraction: 1.0
+            )
+        }
+        
+        finalImage.unlockFocus()
+        
+        // 保存长图
+        let savePanel = NSSavePanel()
+        savePanel.allowedContentTypes = [UTType.png]
+        savePanel.nameFieldStringValue = "exported_image.png"
+        
+        if savePanel.runModal() == .OK {
+            if let url = savePanel.url,
+               let imageData = finalImage.tiffRepresentation,
+               let bitmapImage = NSBitmapImageRep(data: imageData),
+               let pngData = bitmapImage.representation(using: .png, properties: [:]) {
+                do {
+                    try pngData.write(to: url)
+                    print("长图已导出到: \(url.path)")
+                    
+                    // 导出成功后，在主线程清除选中状态
+                    DispatchQueue.main.async {
+                        selectedFrames.removeAll() // 清除所有选中的卡片
+                    }
+                } catch {
+                    print("导出长图失败: \(error.localizedDescription)")
+                }
+            }
+        } else {
+            // 用户取消导出时也清除选中状态
+            DispatchQueue.main.async {
+                selectedFrames.removeAll()
+            }
+        }
+    }
 }
 
 struct EditableWord: Identifiable {
@@ -1084,7 +1272,9 @@ struct SegmentView: View {
             VStack(alignment: .leading, spacing: 2) {
                 // 可点击的时间戳
                 Button(action: {
-                    onTimeClick(segment.startTime)  // 点击时间戳跳转到开始时间
+                    // 将时间戳转换为整数秒
+                    let currentSeconds = ceil(segment.startTime)
+                    onTimeClick(currentSeconds)
                 }) {
                     Text("\(TimeFormatter.formatSRT(seconds: segment.startTime)) --> \(TimeFormatter.formatSRT(seconds: segment.endTime))")
                         .font(.caption)
