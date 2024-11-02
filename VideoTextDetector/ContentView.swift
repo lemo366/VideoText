@@ -600,12 +600,12 @@ struct ContentView: View {
     }
     
     // 首先定义一个用于写入 JSON 文件的函数
-    func writeJSONFile(result: TranscriptionResult, to url: URL) -> Result<String, Error> {
+    func writeJSONFile(result: TranscriptionResult) -> Result<URL, Error> {
         do {
-            // 获取下载目录路径
-            let downloadsPath = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
+            // 使用临时目录
+            let tempDirectory = FileManager.default.temporaryDirectory
             let timestamp = ISO8601DateFormatter().string(from: Date())
-            let jsonURL = downloadsPath.appendingPathComponent("transcription_\(timestamp).json")
+            let jsonURL = tempDirectory.appendingPathComponent("transcription_\(timestamp).json")
             
             // 创建 JSON 编码器
             let jsonEncoder = JSONEncoder()
@@ -615,7 +615,7 @@ struct ContentView: View {
             let jsonData = try jsonEncoder.encode(result)
             try jsonData.write(to: jsonURL)
             
-            return .success(jsonURL.absoluteString)
+            return .success(jsonURL)
         } catch {
             return .failure(error)
         }
@@ -652,18 +652,16 @@ struct ContentView: View {
                 
                 // 保存 JSON 文件并处理转录结果
                 for result in transcriptionResults {
-                    // 使用 FileManager 获取临时目录
-                    let tempDirectory = FileManager.default.temporaryDirectory
-                    let tempFileURL = tempDirectory.appendingPathComponent("transcriptionResult_\(UUID().uuidString).json")
-    
-                    let saveResult = writeJSONFile(result: result, to: tempFileURL)
+                    let saveResult = writeJSONFile(result: result)
                     switch saveResult {
-                    case .success(let path):
-                        print("JSON 文已保存到临时目录: \(path)")
-                        // 将转录结果转换为可编辑段落
-                        if let url = URL(string: path) {
-                            createEditableSegmentsFromJSON(url)
-                        }
+                    case .success(let jsonURL):
+                        print("JSON 文件已保存到临时目录: \(jsonURL.path)")
+                        // 使用临时文件创建可编辑段落
+                        createEditableSegmentsFromJSON(jsonURL)
+                        
+                        // 可选：在处理完后删除临时文件
+                        try? FileManager.default.removeItem(at: jsonURL)
+                        
                     case .failure(let error):
                         print("保存 JSON 文件失败: \(error.localizedDescription)")
                     }
