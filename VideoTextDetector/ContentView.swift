@@ -13,7 +13,7 @@ struct ContentView: View {
     @State private var recognitionLevel: VNRequestTextRecognitionLevel = .fast
     @State private var recognitionLanguage: String = "en-US" // 默认选择英文
     @State private var transcriptionLanguage: String = "en"
-    @State private var isTranscribing = false
+    @State private var isTranscribing = false // 控制转录进度指示器的显示
     // @State private var transcriptionText: String = ""
     @State private var searchKeyword = ""
     @State private var detectedFrames: [DetectedFrame] = [] // 存储所有检测到的帧
@@ -36,6 +36,11 @@ struct ContentView: View {
     @State private var showTranslation = false
     @State private var configuration: TranslationSession.Configuration?
     @State private var selectedFrames: Set<UUID> = []
+    @State private var mediaType: MediaType = .none // 用于区分媒体类型
+    @State private var isPlaying: Bool = false
+    @State private var currentTime: Double = 0
+    @State private var duration: Double = 0
+    @State private var timer: Timer?
 
     @StateObject private var videoProcessor = VideoProcessor()
 
@@ -44,24 +49,34 @@ struct ContentView: View {
             HSplitView {
                 // 左侧内容
                 VStack(spacing: 10) {
-                    // 视频播放器
+                    // 媒体播放器
                     if let url = selectedVideo {
-                        VideoPlayer(url: url, player: player ?? AVPlayer(url: url))
+                        if mediaType == .video {
+                            VideoPlayer(url: url, player: player ?? AVPlayer(url: url))
+                                .frame(height: geometry.size.height * 0.6)
+                        } else if mediaType == .audio {
+                            AudioPlayer(
+                                url: url,
+                                player: player ?? AVPlayer(url: url),
+                                segments: editableSegments,
+                                currentTime: currentTime
+                            )
                             .frame(height: geometry.size.height * 0.6)
+                        }
                     } else {
-                        Text("请先选择视频")
+                        Text("请选择视频或音频文件")
                             .frame(height: geometry.size.height * 0.6)
                             .frame(maxWidth: .infinity)
                             .background(Color.gray.opacity(0.2))
                     }
                     
-                    // 选择视频按钮
+                    // 选择媒体按钮
                     HStack {
-                        Button("选择视频") {
-                            selectVideo()
+                        Button("选择本地媒体") {
+                            selectMedia()
                         }
                     }
-
+                    
                     // 视频片段选择器
                     HStack(spacing: 16) {                        
                         HStack(spacing: 8) {
@@ -408,9 +423,11 @@ struct ContentView: View {
             }
         }
         .onAppear {
-            if let url = selectedVideo {
-                player = AVPlayer(url: url)
-            }
+            setupPlayer()
+        }
+        .onDisappear {
+            timer?.invalidate()
+            timer = nil
         }
         .frame(minWidth: 1000, minHeight: 600)
     }
@@ -623,7 +640,7 @@ struct ContentView: View {
 
     // 修改转录函数
     func transcribeAudio() async {
-        isTranscribing = true
+        isTranscribing = true // 开始转录时显示进度指示器
         
         Task(priority: .userInitiated) {
             do {
@@ -666,8 +683,17 @@ struct ContentView: View {
                         print("保存 JSON 文件失败: \(error.localizedDescription)")
                     }
                 }
+                
+                // 自动跳转到转录结果界面
+                DispatchQueue.main.async {
+                    selectedSegment = 1 // 设置为转录结果
+                    isTranscribing = false // 转录完成后隐藏进度指示器
+                }
             } catch {
                 print("转录错误: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    isTranscribing = false // 转录出错时也隐藏进度指示器
+                }
             }
         }
         
@@ -1189,6 +1215,84 @@ struct ContentView: View {
             }
         }
     }
+
+    // 添加新的方法
+    enum MediaType {
+        case none
+        case video
+        case audio
+    }
+
+    func selectMedia() {
+        let panel = NSOpenPanel()
+        panel.allowedContentTypes = [UTType.movie, UTType.audio]
+        panel.allowsMultipleSelection = false
+        
+        if panel.runModal() == .OK {
+            guard let selectedURL = panel.url else { return }
+            selectedVideo = selectedURL
+            
+            // 判断媒体类型
+            let typeIdentifier = try? selectedURL.resourceValues(forKeys: [.typeIdentifierKey]).typeIdentifier
+            if let identifier = typeIdentifier {
+                if UTType(identifier)?.conforms(to: .audio) ?? false {
+                    mediaType = .audio
+                    // 自动开始音频转录
+                    Task {
+                        await transcribeAudio()
+                    }
+                } else {
+                    mediaType = .video
+                    // 处理视频并获取检测到的帧
+                    Task(priority: .userInitiated) { // 设置优先级为 userInitiated
+                        do {
+                            // 处理视频并获取检测到的帧
+                            detectedFrames = try await videoProcessor.processVideo(url: selectedVideo!, recognitionLevel: recognitionLevel, recognitionLanguage: recognitionLanguage)
+                        } catch {
+                            print("处理视频失败: \(error)")
+                        }
+                    }
+                }
+            }
+            
+            setupPlayer()
+        }
+    }
+
+    func setupPlayer() {
+        guard let url = selectedVideo else { return }
+        player = AVPlayer(url: url)
+        
+        // 获取媒体时长
+        let asset = AVAsset(url: url)
+        let duration = asset.duration
+        self.duration = CMTimeGetSeconds(duration)
+        
+        // 设置时间观察器
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
+            if let player = player {
+                currentTime = CMTimeGetSeconds(player.currentTime())
+            }
+        }
+        
+        // 添加播放结束通知
+        NotificationCenter.default.addObserver(
+            forName: .AVPlayerItemDidPlayToEndTime,
+            object: player?.currentItem,
+            queue: .main
+        ) { _ in
+            isPlaying = false
+            currentTime = 0
+            player?.seek(to: .zero)
+        }
+    }
+
+    func getCurrentSegment() -> EditableSegment? {
+        return editableSegments.first { segment in
+            currentTime >= segment.startTime && currentTime <= segment.endTime
+        }
+    }
 }
 
 struct EditableWord: Identifiable {
@@ -1308,7 +1412,7 @@ struct SegmentView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading) // 右侧内容占满剩余空间
         }
-        .padding(.vertical, 4) // 落上下间距
+        .padding(.vertical, 4) // 落上间距
         .padding(.horizontal, 10) // 段落左右间距
     }
 }

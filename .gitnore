@@ -69,3 +69,6 @@ fastlane/test_output
 
 *.json
 *.srt
+Info.plist
+.vscode
+whisperkit

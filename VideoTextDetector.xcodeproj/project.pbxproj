@@ -16,6 +16,7 @@
 		AF5E68862C9BD7E9008DBC6A /* VideoTextDetectorUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF5E68852C9BD7E9008DBC6A /* VideoTextDetectorUITestsLaunchTests.swift */; };
 		AF5E68942C9BD90B008DBC6A /* Vision.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF5E68932C9BD90B008DBC6A /* Vision.framework */; };
 		AF5E68962C9BD915008DBC6A /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF5E68952C9BD915008DBC6A /* AVFoundation.framework */; };
+		AF8057572CDE5AA20067AF05 /* AudioPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = AF8057562CDE5AA20067AF05 /* AudioPlayer.swift */; };
 		AF807F822CD4B9DE00F748E9 /* Translation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF807F812CD4B9DE00F748E9 /* Translation.framework */; };
 		AF9B204A2CA52F7900838404 /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = AF9B20492CA52F7900838404 /* WhisperKit */; };
 		AF9B204C2CA52F7E00838404 /* whisperkit-cli in Frameworks */ = {isa = PBXBuildFile; productRef = AF9B204B2CA52F7E00838404 /* whisperkit-cli */; };
@@ -69,6 +70,7 @@
 		AF5E68852C9BD7E9008DBC6A /* VideoTextDetectorUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoTextDetectorUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		AF5E68932C9BD90B008DBC6A /* Vision.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Vision.framework; path = System/Library/Frameworks/Vision.framework; sourceTree = SDKROOT; };
 		AF5E68952C9BD915008DBC6A /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
+		AF8057562CDE5AA20067AF05 /* AudioPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AudioPlayer.swift; sourceTree = "<group>"; };
 		AF807F812CD4B9DE00F748E9 /* Translation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Translation.framework; path = System/Library/Frameworks/Translation.framework; sourceTree = SDKROOT; };
 		AFD935F62C9BDC3E00F07B3C /* VideoProcessor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoProcessor.swift; sourceTree = "<group>"; };
 		AFD935F82C9BDC7500F07B3C /* VideoPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayer.swift; sourceTree = "<group>"; };
@@ -130,6 +132,7 @@
 		AF5E68662C9BD7E8008DBC6A /* VideoTextDetector */ = {
 			isa = PBXGroup;
 			children = (
+				AF8057562CDE5AA20067AF05 /* AudioPlayer.swift */,
 				AF5E68672C9BD7E8008DBC6A /* VideoTextDetectorApp.swift */,
 				AF5E68692C9BD7E8008DBC6A /* ContentView.swift */,
 				AF5E686B2C9BD7E9008DBC6A /* Assets.xcassets */,
@@ -314,6 +317,7 @@
 			files = (
 				AFD935F92C9BDC7500F07B3C /* VideoPlayer.swift in Sources */,
 				AFD935F72C9BDC3E00F07B3C /* VideoProcessor.swift in Sources */,
+				AF8057572CDE5AA20067AF05 /* AudioPlayer.swift in Sources */,
 				AF5E686A2C9BD7E8008DBC6A /* ContentView.swift in Sources */,
 				AF5E68682C9BD7E8008DBC6A /* VideoTextDetectorApp.swift in Sources */,
 			);

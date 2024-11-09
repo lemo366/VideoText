@@ -8,6 +8,8 @@ struct VideoPlayer: NSViewRepresentable {
     func makeNSView(context: Context) -> AVPlayerView {
         let view = AVPlayerView()
         view.player = player
+        view.controlsStyle = .inline
+        view.showsFullScreenToggleButton = false
         return view
     }
     
